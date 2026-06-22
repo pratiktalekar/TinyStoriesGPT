@@ -4,6 +4,7 @@ pymongo[srv]
 werkzeug
 torch
 tiktoken
+numpy
 python-dotenv
 huggingface_hub
 gunicorn
