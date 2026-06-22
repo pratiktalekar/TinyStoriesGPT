@@ -111,7 +111,7 @@ def chat():
     story_id = data.get("story_id")
     user_message = data.get("message")
 
-    ai_response = generate_text(user_message, max_new_tokens=200)
+    ai_response = generate_text(user_message, max_new_tokens=80)
 
     message_pair = [
         {"role": "user", "content": user_message},

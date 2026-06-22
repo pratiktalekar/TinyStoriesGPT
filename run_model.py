@@ -1,12 +1,19 @@
 # run_model.py
 import os
+import gc
 import torch
 import tiktoken
 from huggingface_hub import hf_hub_download
 from model import GPT, GPTConfig
 
 # -------------------------------------------------
-# 1. Config constants
+# 1. Limit PyTorch resource usage for low-memory envs
+# -------------------------------------------------
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+# -------------------------------------------------
+# 2. Config constants
 # -------------------------------------------------
 MODEL_FILENAME = "best_model_params.pt"
 HF_REPO_ID = "pratiktalekar/tinystoriesgpt"
@@ -22,7 +29,7 @@ config = GPTConfig(
 )
 
 # -------------------------------------------------
-# 2. Lazy-loaded globals (saves memory at startup)
+# 3. Lazy-loaded globals (saves memory at startup)
 # -------------------------------------------------
 _model = None
 _enc = None
@@ -68,32 +75,54 @@ def _get_model():
     _model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     _model.to(device)
     _model.eval()
+
+    # Free any leftover memory from loading
+    gc.collect()
+
     print("✅ Model loaded and ready for inference")
     return _model
 
 
 # -------------------------------------------------
-# 3. Text generation helper
+# 4. Text generation helper
 # -------------------------------------------------
 @torch.no_grad()
-def generate_text(prompt: str, max_new_tokens: int = 100) -> str:
-    """Generate text using the trained GPT model."""
+def generate_text(prompt: str, max_new_tokens: int = 80) -> str:
+    """Generate text using the trained GPT model.
+    
+    max_new_tokens is capped at 80 to stay within Render free-tier
+    memory limits (~512 MB).
+    """
     model = _get_model()
     enc = _get_tokenizer()
     device = _get_device()
 
+    # Cap tokens to avoid OOM
+    max_new_tokens = min(max_new_tokens, 80)
+
     input_ids = enc.encode(prompt)
+
+    # Truncate prompt to fit within block_size leaving room for generation
+    max_prompt_tokens = config.block_size - 16  # leave headroom
+    if len(input_ids) > max_prompt_tokens:
+        input_ids = input_ids[-max_prompt_tokens:]
+
     x = torch.tensor(input_ids, dtype=torch.long, device=device)[None, ...]  # add batch dimension
     y = model.generate(x, max_new_tokens=max_new_tokens)
     out = enc.decode(y[0].tolist())
+
+    # Explicitly free intermediate tensors
+    del x, y
+    gc.collect()
+
     return out
 
 
 # -------------------------------------------------
-# 4. Example usage
+# 5. Example usage
 # -------------------------------------------------
 if __name__ == "__main__":
     prompt = "once upon a time"
-    output = generate_text(prompt, max_new_tokens=100)
+    output = generate_text(prompt, max_new_tokens=80)
     print("Prompt:", prompt)
     print("\nGenerated text:\n", output)
