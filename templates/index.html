@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/output.css">
+    <link rel="shortcut icon" href="/static/icons8-technology-100.png" type="image/x-icon">
+    <title>TinyStoriesGPT</title>
+</head>
+<body class="bg-base text-white font-sans overflow-hidden">
+    
+<!-- Abstract Background Elements (Removed for polished dark black theme) -->
+
+<div class="flex h-screen relative z-10 p-4 gap-4">
+
+    <!-- Sidebar -->
+    <div class="left w-64 flex flex-col bg-sidebar/60 backdrop-blur-2xl border border-white/5 rounded-3xl p-4 shadow-2xl flex-shrink-0">
+        <!-- Logo Area -->
+        <div class="flex items-center gap-3 px-2 mb-6">
+            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+            </div>
+            <span class="font-display font-semibold text-lg tracking-tight">TinyStories<span class="text-gray-400">GPT</span></span>
+        </div>
+
+        <button onclick="newStory()" class="flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-sm font-medium text-white transition-all hover:scale-[1.02] active:scale-95 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Story
+        </button>
+
+        <!-- Past Stories List -->
+        <div class="mt-6 flex flex-col gap-1 overflow-y-auto pr-1 flex-1 custom-scrollbar" id="stories-list">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Profile Section -->
+        <div class="mt-auto relative w-full pt-4 border-t border-white/10">
+            <!-- Popup Menu -->
+            <div id="profile-menu" class="hidden absolute bottom-[70px] left-0 w-full bg-[#1e1e21] border border-white/10 rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-fade-in-up origin-bottom">
+                <button onclick="editName()" class="px-4 py-3 text-sm text-gray-300 hover:bg-white/5 hover:text-white text-left transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Name
+                </button>
+                <a href="/logout" class="px-4 py-3 text-sm text-red-400 hover:bg-white/5 text-left transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Logout
+                </a>
+            </div>
+
+            <button onclick="toggleMenu()" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/5 w-full transition-colors group">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-gray-700 to-gray-500 text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-inner group-hover:ring-2 group-hover:ring-white/20 transition-all">
+                    {{ name[0].upper() }}
+                </div>
+                <div class="flex flex-col items-start overflow-hidden">
+                    <span class="text-sm font-medium text-white truncate w-full text-left">{{ name }}</span>
+                    <span class="text-xs text-gray-500">Free Plan</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="right flex-1 flex flex-col items-center relative bg-[#0a0a0b]/40 backdrop-blur-2xl border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+        
+        <div id="chat-container" class="flex flex-col flex-1 w-full max-w-3xl px-6 pt-10 pb-28 overflow-hidden min-h-0">
+
+            <!-- Welcome Text (hidden when chat starts) -->
+            <div id="welcome" class="flex-1 flex flex-col flex-1 items-center justify-center gap-4 animate-fade-in-up -mt-20">
+                <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-2 shadow-inner">
+                   <img src="/static/icons8-technology-100.png" class="w-10 h-10 opacity-80" alt="Tech">
+                </div>
+                <h1 class="text-4xl md:text-5xl font-display font-bold text-center tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+                    What story shall we<br/>tell today?
+                </h1>
+                <p class="text-gray-500 text-sm md:text-base text-center max-w-md mt-2">
+                    Give me a character, a specific setting, or an entire plot, and I will craft a tiny story just for you.
+                </p>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="messages" class="w-full flex-1 flex flex-col gap-6 overflow-y-auto hidden pr-2 scroll-smooth custom-scrollbar pb-10">
+            </div>
+
+        </div>
+
+        <!-- Input Box Area -->
+        <div class="absolute bottom-6 w-full max-w-3xl px-6 z-20">
+            <div class="relative flex items-end bg-[#1e1e21]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] focus-within:ring-1 focus-within:ring-white/30 transition-all">
+                <textarea
+                    id="prompt-input"
+                    rows="1"
+                    placeholder="Enter a story idea..."
+                    class="flex-1 bg-transparent border-0 outline-none text-white placeholder-gray-500 text-[15px] resize-none py-3 px-4 max-h-32 min-h-[48px] overflow-hidden"
+                    oninput="this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 128) + 'px';"
+                    onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+                ></textarea>
+                
+                <button id="send-btn" onclick="sendMessage()" class="bg-white text-black hover:bg-gray-200 rounded-full p-2.5 mb-1.5 mr-1.5 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hidden md:flex items-center justify-center h-9 w-9">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 12h16m-8-8l8 8-8 8"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center mt-2">
+                <span class="text-[10px] text-gray-600 font-medium tracking-wide uppercase">TinyStoriesGPT Iteration 1</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* Custom Scrollbar for sleek UI */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+
+<script>
+    let currentStoryId = null;
+    let isGenerating = false;
+
+    async function loadStories() {
+        const res = await fetch("/stories");
+        const stories = await res.json();
+        const list = document.getElementById("stories-list");
+        list.innerHTML = "";
+        stories.forEach(story => {
+            const btn = document.createElement("button");
+            btn.className = "text-left px-4 py-2.5 rounded-xl hover:bg-white/5 text-sm text-gray-400 hover:text-white transition-all truncate w-full my-0.5 flex items-center gap-2 group";
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> ${story.title || 'New Story'}`;
+            btn.onclick = () => loadStory(story._id);
+            list.appendChild(btn);
+        });
+    }
+
+    async function loadStory(storyId) {
+        if(isGenerating) return;
+        const res = await fetch(`/stories/${storyId}`);
+        const story = await res.json();
+        currentStoryId = storyId;
+        document.getElementById("welcome").classList.add("hidden");
+        const messages = document.getElementById("messages");
+        messages.classList.remove("hidden");
+        messages.innerHTML = "";
+        story.messages.forEach(msg => appendMessage(msg.role, msg.content, false));
+    }
+
+    async function sendMessage() {
+        if(isGenerating) return;
+        
+        const input = document.getElementById("prompt-input");
+        const message = input.value.trim();
+        if (!message) return;
+        
+        input.value = "";
+        input.style.height = "48px";
+        
+        document.getElementById("welcome").classList.add("hidden");
+        document.getElementById("messages").classList.remove("hidden");
+
+        appendMessage("user", message, true);
+        
+        isGenerating = true;
+        const sendBtn = document.getElementById("send-btn");
+        sendBtn.disabled = true;
+        
+        // Show loading indicator
+        const loadingId = "loader-" + Date.now();
+        appendLoading(loadingId);
+
+        try {
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ story_id: currentStoryId, message })
+            });
+            const data = await res.json();
+            
+            // Remove Loader
+            document.getElementById(loadingId)?.remove();
+
+            if (data.story_id) currentStoryId = data.story_id;
+            appendMessage("ai", data.response, true);
+            loadStories(); // refresh sidebar
+        } catch(e) {
+            document.getElementById(loadingId)?.remove();
+            appendMessage("ai", "Sorry, an error occurred while generating the story.", true);
+        } finally {
+            isGenerating = false;
+            sendBtn.disabled = false;
+        }
+    }
+
+    function appendMessage(role, content, animate) {
+        const messages = document.getElementById("messages");
+        const div = document.createElement("div");
+        
+        if(animate) {
+            div.className = "animate-fade-in-up w-full flex";
+        } else {
+            div.className = "w-full flex";
+        }
+
+        if(role === "user") {
+            div.classList.add("justify-end");
+            div.innerHTML = `
+                <div class="bg-gray-800 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm max-w-[85%] text-[15px] leading-relaxed shadow-md">
+                    ${escapeHTML(content)}
+                </div>
+            `;
+        } else {
+            div.classList.add("justify-start");
+            div.innerHTML = `
+                <div class="flex gap-4 max-w-[90%]">
+                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 mt-1 hidden md:flex">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 text-gray-200 px-5 py-4 rounded-3xl rounded-tl-sm text-[15px] leading-relaxed shadow-sm">
+                        ${content.replace(/\\n/g, '<br/>')}
+                    </div>
+                </div>
+            `;
+        }
+        messages.appendChild(div);
+        setTimeout(() => {
+            messages.scrollTop = messages.scrollHeight;
+        }, 50);
+    }
+
+    function appendLoading(id) {
+        const messages = document.getElementById("messages");
+        const div = document.createElement("div");
+        div.id = id;
+        div.className = "w-full flex justify-start animate-fade-in-up";
+        div.innerHTML = `
+            <div class="flex gap-4 max-w-[90%]">
+                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 mt-1 hidden md:flex">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </svg>
+                </div>
+                <div class="bg-white/5 border border-white/10 text-gray-200 px-5 py-4 rounded-3xl rounded-tl-sm flex items-center gap-2 h-[56px]">
+                    <span class="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></span>
+                    <span class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></span>
+                    <span class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></span>
+                </div>
+            </div>
+        `;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function newStory() {
+        if(isGenerating) return;
+        currentStoryId = null;
+        document.getElementById("messages").innerHTML = "";
+        document.getElementById("messages").classList.add("hidden");
+        document.getElementById("welcome").classList.remove("hidden");
+    }
+
+    function toggleMenu() {
+        const menu = document.getElementById("profile-menu");
+        menu.classList.toggle("hidden");
+    }
+
+    function editName() {
+        const newName = prompt("Enter new name:");
+        if (!newName) return;
+        fetch("/edit-name", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: newName })
+        }).then(() => location.reload());
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener("click", function(e) {
+        const menu = document.getElementById("profile-menu");
+        if (!e.target.closest(".relative") && !menu.classList.contains("hidden")) {
+            menu.classList.add("hidden");
+        }
+    });
+
+    // Make input auto-expand on typing
+    const textarea = document.getElementById("prompt-input");
+    textarea.addEventListener("input", function() {
+        const btn = document.getElementById("send-btn");
+        if(this.value.trim().length > 0) {
+            btn.classList.add("bg-white", "text-black");
+            btn.classList.remove("bg-white/20", "text-gray-400");
+        } else {
+            btn.classList.remove("bg-white", "text-black");
+            btn.classList.add("bg-white/20", "text-gray-400");
+        }
+    });
+
+    loadStories();
+</script>
+</body>
+</html>

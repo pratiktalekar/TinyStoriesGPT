@@ -1,0 +1,9 @@
+flask
+flask-login
+pymongo[srv]
+werkzeug
+torch
+tiktoken
+python-dotenv
+huggingface_hub
+gunicorn

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/output.css">
+    <title>Sign Up | TinyStoriesGPT</title>
+</head>
+<body class="bg-base text-white flex items-center justify-center h-screen relative overflow-hidden font-sans">
+    
+    <!-- Abstract Background Elements (Removed for polished dark black theme) -->
+
+    <div class="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl p-8 rounded-3xl w-full max-w-sm flex flex-col gap-6 relative z-10 animate-fade-in-up">
+        
+        <div class="flex flex-col items-center gap-1 mt-2">
+            <h1 class="text-3xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-50 to-gray-400">Create Account</h1>
+            <p class="text-gray-400 text-sm mt-1">Join TinyStoriesGPT today</p>
+        </div>
+
+        <div id="error" class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl text-center hidden"></div>
+
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs text-gray-400 font-medium ml-1">Full Name</label>
+                <input id="name" type="text" placeholder="John Doe"
+                    class="bg-black/20 border border-white/10 px-4 py-3 rounded-xl outline-none text-sm placeholder-gray-600 focus:border-primary-500 focus:bg-black/30 transition-all"/>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs text-gray-400 font-medium ml-1">Email</label>
+                <input id="email" type="email" placeholder="you@example.com"
+                    class="bg-black/20 border border-white/10 px-4 py-3 rounded-xl outline-none text-sm placeholder-gray-600 focus:border-primary-500 focus:bg-black/30 transition-all"/>
+            </div>
+            
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs text-gray-400 font-medium ml-1">Password</label>
+                <input id="password" type="password" placeholder="••••••••"
+                    class="bg-black/20 border border-white/10 px-4 py-3 rounded-xl outline-none text-sm placeholder-gray-600 focus:border-primary-500 focus:bg-black/30 transition-all"/>
+            </div>
+        </div>
+
+        <button onclick="signup()"
+            class="bg-white hover:bg-gray-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] text-black py-3 rounded-xl text-sm font-semibold transition-all mt-2">
+            Sign Up
+        </button>
+
+        <p class="text-gray-500 text-sm text-center mt-2 mb-2">
+            Already have an account?
+            <a href="/login" class="text-gray-300 hover:text-white hover:underline transition-colors">Sign in</a>
+        </p>
+    </div>
+
+    <script>
+        async function signup() {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const error = document.getElementById("error");
+
+            if (!name || !email || !password) {
+                error.textContent = "Please fill in all fields.";
+                error.classList.remove("hidden");
+                return;
+            }
+
+            const btn = document.querySelector("button");
+            const originalText = btn.textContent;
+            btn.textContent = "Creating account...";
+            btn.disabled = true;
+            btn.classList.add("opacity-70");
+
+            try {
+                const res = await fetch("/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    window.location.href = "/login";
+                } else {
+                    error.textContent = data.error || "An error occurred";
+                    error.classList.remove("hidden");
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-70");
+                }
+            } catch (err) {
+                error.textContent = "Network error. Please try again.";
+                error.classList.remove("hidden");
+                btn.textContent = originalText;
+                btn.disabled = false;
+                btn.classList.remove("opacity-70");
+            }
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") signup();
+        });
+    </script>
+</body>
+</html>
